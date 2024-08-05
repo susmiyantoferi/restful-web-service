@@ -30,56 +30,50 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 public class WebSecurity {
 
-//    @Autowired
-//    private UserService userService;
-//
-//    @Autowired
-//    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final UserService userService;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public WebSecurity(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.userService = userService;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(AbstractHttpConfigurer::disable).csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractAuthenticationFilterConfigurer::disable).securityMatcher("/")
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .anyRequest().authenticated()
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
 
+        authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
+
+        http.csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(
+                        authz->authz.requestMatchers(HttpMethod.POST, "/users")
+                        .permitAll().anyRequest().authenticated()
                 );
         return http.build();
+
+
     }
 
 //    @Bean
-//   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//       http.csrf(AbstractHttpConfigurer::disable)
-//               .authorizeHttpRequests(authz -> {
-//                    authz.requestMatchers(HttpMethod.POST, "/users").permitAll()
-//                            .anyRequest().authenticated();
-//               }) .formLogin(AbstractAuthenticationFilterConfigurer::permitAll);
-//       return http.build();
-//   }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder encoder(){
-        return new BCryptPasswordEncoder();
-    }
-
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http.cors(AbstractHttpConfigurer::disable).csrf(AbstractHttpConfigurer::disable)
+//                .formLogin(AbstractAuthenticationFilterConfigurer::disable).securityMatcher("/")
+//                .authorizeHttpRequests(authz -> authz
+//                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+//                        .anyRequest().authenticated()
+//
+//                );
+//        return http.build();
+//    }
+//
 //    @Bean
-//    public WebSecurityCustomizer webSecurityCustomizer() {
-//        return (web) -> web.ignoring().requestMatchers(HttpMethod.POST, "/users");
+//    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+//        return authenticationConfiguration.getAuthenticationManager();
+//    }
+//
+//    @Bean
+//    public PasswordEncoder encoder(){
+//        return new BCryptPasswordEncoder();
 //    }
 
-
-//    public WebSecurity(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
-//        this.userService = userService;
-//        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-//    }
-
-//    public void configurer(AuthenticationManagerBuilder builder){
-//        builder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
-//    }
 }
